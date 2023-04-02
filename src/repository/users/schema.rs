@@ -3,7 +3,7 @@ use mongodb::bson::oid::ObjectId;
 use serde::Serialize;
 use serde::Deserialize;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct User {
     #[serde(rename = "_id")]
     pub id: Option<ObjectId>,
