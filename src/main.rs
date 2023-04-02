@@ -1,7 +1,10 @@
+mod repository;
+mod api;
+
 use std::thread;
 use std::time::Duration;
 use actix_web::{App, HttpResponse, HttpServer, Responder, web};
-use deadpool_lapin::{Manager, Pool, PoolError};
+use deadpool_lapin::{Config, Manager, Pool, PoolError};
 use lapin::ConnectionProperties;
 use lapin::options::{BasicAckOptions, BasicConsumeOptions, QueueDeclareOptions};
 use lapin::types::FieldTable;
@@ -45,7 +48,7 @@ async fn main() -> Result<()> {
     let addr =
         std::env::var("AMQP_ADDR").unwrap_or_else(|_| "amqp://rmq:rmq@127.0.0.1:5672/%2f".into());
     let manager = Manager::new(addr, ConnectionProperties::default().with_tokio());
-    let pool: Pool = deadpool::managed::Pool::builder(manager)
+    let pool: Pool = Pool::builder(manager)
         .max_size(10)
         .build()
         .expect("can create pool");
@@ -103,6 +106,14 @@ async fn init_rmq_listen(pool: Pool) -> Result<()> {
         )
         .await?;
     println!("Declared queue {:?}", queue);
+    let queue2 = channel
+        .queue_declare(
+            "hello2",
+            QueueDeclareOptions::default(),
+            FieldTable::default(),
+        )
+        .await?;
+    println!("Declared queue {:?}", queue2);
 
     let mut consumer = channel
         .basic_consume(
@@ -117,7 +128,7 @@ async fn init_rmq_listen(pool: Pool) -> Result<()> {
     while let Some(delivery) = consumer.next().await {
         match delivery {
             Ok(delivery) => {
-                println!("received msg: {:?}",  String::from_utf8_lossy(&delivery.data));
+                println!("received msg: {:?}", String::from_utf8_lossy(&delivery.data));
                 channel
                     .basic_ack(delivery.delivery_tag, BasicAckOptions::default())
                     .await?
@@ -127,3 +138,5 @@ async fn init_rmq_listen(pool: Pool) -> Result<()> {
     };
     Ok(())
 }
+
+
