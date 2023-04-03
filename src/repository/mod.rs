@@ -1,2 +1,2 @@
-mod users;
+pub mod users;
 

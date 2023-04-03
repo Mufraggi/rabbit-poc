@@ -1,3 +1,3 @@
-mod create;
-mod schema;
+pub mod create;
+pub mod schema;
 

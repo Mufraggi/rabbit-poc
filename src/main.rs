@@ -14,6 +14,11 @@ use serde::Serialize;
 use tokio_amqp::LapinTokioExt;
 use std::result::Result as StdResult;
 use futures::{join, StreamExt};
+use mongodb::bson::DateTime;
+use mongodb::bson::oid::ObjectId;
+use crate::repository::users;
+use crate::repository::users::create::Repository;
+use crate::repository::users::schema::User;
 
 type RMQResult<T> = StdResult<T, PoolError>;
 type Result<T> = StdResult<T, Error>;
@@ -128,10 +133,21 @@ async fn init_rmq_listen(pool: Pool) -> Result<()> {
     while let Some(delivery) = consumer.next().await {
         match delivery {
             Ok(delivery) => {
+                let utc = DateTime::now();
+                let user = User {
+                    id: Some(ObjectId::new()),
+                    name: "muuuuuuuuuuf".to_string(),
+                    age: 12,
+                    created_at: Some(utc),
+                    updated_at: None,
+                };
+                let q = users::create::MongoRepository::new("").await.unwrap();
+                q.insert(&user).await;
                 println!("received msg: {:?}", String::from_utf8_lossy(&delivery.data));
                 channel
                     .basic_ack(delivery.delivery_tag, BasicAckOptions::default())
                     .await?
+
             }
             Err(_) => { (()) }
         }
