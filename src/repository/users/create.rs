@@ -50,7 +50,7 @@ impl MongoRepository {
 
 #[async_trait]
 pub trait Repository {
-    async  fn insert(&self ,user: &User) ->  anyhow::Result<ObjectId, mongodb::error::Error>;
+    async  fn insert(&self ,user: &User) ->  anyhow::Result<ObjectId, InsertError>;
     async fn find_by_id(&self, id: ObjectId) -> anyhow::Result<User, FetchOneError>;
 }
 
@@ -58,9 +58,20 @@ pub trait Repository {
 
 #[async_trait]
 impl Repository for MongoRepository {
-    async fn insert(&self ,user: &User) ->  anyhow::Result<ObjectId, mongodb::error::Error> {
-        let result = self.collection.insert_one(bson::to_document(user)?, None).await?;
-        Ok(result.inserted_id.as_object_id().unwrap().clone())
+    async fn insert(&self ,user: &User) ->  anyhow::Result<ObjectId, InsertError> {
+        match bson::to_document(user) {
+            Ok(doc) => {
+                match self.collection.insert_one(doc, None).await {
+                    Ok(document) => {
+                        Ok(document.inserted_id.as_object_id().unwrap())
+                    }
+                    Err(_) => {Err(InsertError::Conflict)}
+                }
+            }
+            Err(_) => {
+                Err(InsertError::Unknown)
+            }
+        }
     }
 
     async fn find_by_id(&self, id: ObjectId) -> anyhow::Result<User, FetchOneError> {
