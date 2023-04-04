@@ -92,7 +92,7 @@ impl Repository for MongoRepository {
 mod tests {
     use mongodb::bson::DateTime;
     use mongodb::bson::oid::ObjectId;
-    use crate::repository::users::create::{MongoRepository, Repository};
+    use crate::repository::users::users_repository::{MongoRepository, Repository};
     use crate::repository::users::schema::User;
 
     #[tokio::test]
