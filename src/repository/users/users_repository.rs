@@ -14,6 +14,8 @@ pub struct MongoRepository {
     collection: Collection<Document>,
 }
 
+
+
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum InsertError {
     Conflict,
